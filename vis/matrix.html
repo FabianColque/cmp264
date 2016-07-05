@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<html>
+  <head>
+    <link rel="stylesheet" type="text/css" href="css/style.css">
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
+    <script type="text/javascript" src="js/d3.js"></script>
+    <!--<script src="http://d3js.org/d3.v3.js"></script>-->  
+    <script type="text/javascript" src="js/jscript2.js"></script>
+    
+    <style>
+
+
+
+        .background {
+          fill: #eee;
+        }
+
+        line {
+          stroke: #fff;
+        }
+
+        text.active {
+          fill: red;
+        }
+
+    </style>
+  </head>
+
+  <body>
+  
+    <div id="dataset-picker">
+    </div>
+    <p>Order by: <select id="order">
+      <option value="name">Name</option>
+      <option value="frecuencyTotal">Frequency Total</option>
+      <option value="polarity">Polarity</option>
+      <option value="frecuencyPolar">Frecuencia Polar</option>
+    </select>
+    <div id="chart"></div>
+
+  </body>
+ <script type="text/javascript">
+    
+    var dataGeral = [];
+    var palabras = [];
+
+var folder = "./datasetJson/";
+    //var dataset = ["Apex AD2600 Progressive-scan DVD player.json", "Canon G3.json", "Creative Labs Nomad Jukebox Zen Xtra 40GB.json", "Nikon coolpix 4300.json", "Nokia 6610.json", "ipod.json","MicroMP3.json","Canon PowerShot SD500.json", "Linksys Router.json", "Canon S100.json", "Diaper Champ.json", "Nokia 6600.json", "norton.json", "Hitachi router.json"];
+    var dataset = ["Apex AD2600 Progressive-scan DVD player.json", "Canon G3.json", "Creative Labs Nomad Jukebox Zen Xtra 40GB.json", "Nikon coolpix 4300.json", "Nokia 6610.json", "ipod.json","MicroMP3.json","Canon PowerShot SD500.json", "Linksys Router.json"];
+
+    for (var i = 0; i < dataset.length; i++) {
+            $.ajax({
+                dataType    : "json",
+                url         : folder + dataset[i],
+                async       : false,
+                success     : function(data){dataGeral.push(data);}
+            });
+        };    
+
+    var matrix = [];
+    var node = [];
+    var products = [];    
+
+    var contienePalArr = function(pal){
+    for (var i = 0; i < node.length; i++)
+        if(node[i].name === pal)
+            return i;
+        return -1;
+    }
+
+    var gerarArray = function(){
+        var ar = [];
+        for (var i = 0; i < dataGeral.length; i++)
+            ar.push(0);
+        return ar;
+    }
+
+    var toMinus = function(data){
+        return data.toLowerCase();
+    }
+    
+    var nroProduct = dataGeral.length;
+    //por cada produto
+        for (var i = 0; i < dataGeral.length; i++) {
+
+            products.push(toMinus(dataGeral[i].product.name));
+            var gg = dataGeral[i].product.reviews;
+            
+            //por cada comentario
+            for (var ii = 0; ii < gg.length; ii++){
+                
+                //por cada oracion
+                for (var iii = 0; iii < gg[ii].length; iii++){
+                
+                    //por cada key
+                    var vari = gg[ii][iii];
+                    for (var iiii = 0; iiii < vari.keys.length; iiii++){
+                        
+                        var szMat = matrix.length;
+                        var po  = vari.keys[iiii].opstr > 0 ? 1 : 0;
+                        var ne  = vari.keys[iiii].opstr < 0 ? 1 : 0;
+                        var cantpo = vari.keys[iiii].opstr > 0 ? vari.keys[iiii].opstr : 0;
+                        var cantne = vari.keys[iiii].opstr < 0 ? vari.keys[iiii].opstr : 0;
+                        var ind = contienePalArr(toMinus(vari.keys[iiii].feature));
+                        //console.log('iiii', ind, 'name ', vari.keys[iiii].feature);
+                        if(ind === -1){
+                            node.push({name: toMinus(vari.keys[iiii].feature), index: szMat})
+                            matrix[szMat] = d3.range(nroProduct).map(function(j){
+                                if(j === i)
+                                    return {x: j, y: szMat, pos: po, neg : ne, z: 1, npos : cantpo, nneg : cantne};
+                                return {x: j, y: szMat, pos: 0, neg: 0, z: 0, npos : 0, nneg : 0};
+                            });
+                        }else{
+
+                            matrix[ind][i].pos  += po;
+                            matrix[ind][i].neg  += ne;
+                            matrix[ind][i].z    += 1;
+
+                            if(cantpo != 0)
+                            {
+                                matrix[ind][i].npos = (matrix[ind][i].npos > 0 ? (matrix[ind][i].npos + vari.keys[iiii].opstr)/2 : vari.keys[iiii].opstr);    
+                            }else{
+                                matrix[ind][i].nneg = (matrix[ind][i].nneg < 0 ? (matrix[ind][i].nneg + vari.keys[iiii].opstr)/2 : vari.keys[iiii].opstr);
+                            }
+                            
+                        }    
+                    }
+                }
+            }
+        };    
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////
+    var margin = {top: 80, right: 10, bottom: 10, left: 100},
+    width = 420,
+    height = 7000;
+
+    var x = d3.scale.ordinal().rangeBands([0, height]),
+    z = d3.scale.linear().domain([0, 4]).clamp(true),
+    c = d3.scale.category10().domain(d3.range(10)),
+    xv = d3.scale.ordinal().rangeBands([0, width]);
+
+    var colors = ["#d73027", "#fc8d59", "#fee08b", "#ffffbf", "#d9ef8b", "#91cf60", "#1a9850"]
+    var colordom = [-3, -2, -1, 0, 1, 2, 3];
+    var porcor = [0, 0.15, 0.30, 0.45, 0.60, 0.75, 1];
+    var colorScale = d3.scale.linear()
+              .domain(colordom)
+              .range(colors); 
+
+    var colorPor = d3.scale.linear()
+              .domain(porcor)
+              .range(colors);
+
+    
+
+
+    var svg = d3.select("#chart").append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        
+        .append("g")
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+
+    var orders = {
+        name : d3.range(matrix.length).sort(function(a,b){return d3.ascending(node[a].name, node[b].name)}),
+        frecuencyTotal: d3.range(matrix.length).sort(function(a, b) {
+            
+            var aa = 0, bb = 0;
+
+            for(var i = 0; i < matrix[0].length; i++){
+                aa += matrix[a][i].z > 0 ? 1 : 0;
+                bb += matrix[b][i].z > 0 ? 1 : 0;
+            }
+
+            return bb - aa; 
+        }),
+        frecuencyPolar : d3.range(matrix.length).sort(function(a,b){
+            var aa = 0, bb = 0;
+            for(var i = 0; i < matrix[0].length; i++){
+                aa += matrix[a][i].pos > matrix[a][i].neg ? 1 : 0;
+                bb += matrix[b][i].pos > matrix[b][i].neg ? 1 : 0;
+            }
+            return bb - aa;            
+        }),
+        polarity : d3.range(matrix.length).sort(function(a,b){
+            var aa = 0, bb = 0;
+            for(var i = 0; i < matrix[0].length; i++){
+                aa += matrix[a][i].pos * matrix[a][i].npos > matrix[a][i].neg * matrix[a][i].nneg ? 1 : 0;
+                bb += matrix[b][i].pos * matrix[b][i].npos > matrix[b][i].neg * matrix[b][i].nneg ? 1 : 0;
+            }
+            return bb - aa; 
+        })
+
+    }        
+
+    x.domain(orders.name);
+    xv.domain(d3.range(products.length).map(function(d){return d}));
+    var pp = d3.scale.linear().domain([0, 1]).range([0, xv.rangeBand()]);
+
+    svg.append("rect")
+        .attr("class", "background")
+        .attr("width", width)
+        .attr("height", height);
+
+    var row = svg.selectAll(".row")
+      .data(matrix)
+    .enter().append("g")
+      .attr("class", "row")
+      .attr("transform", function(d, i) { return "translate(0," + x(i) + ")"; })
+      .each(row);
+      
+    row.append("line")
+      .attr("x2", width);
+      
+    row.append("text")
+      .attr("x", -6)
+      .attr("y", x.rangeBand() / 2)
+      .attr("dy", ".32em")
+      .attr("text-anchor", "end")
+      .style("font-size", "8px")
+      .text(function(d, i) { return node[i].name; });
+      
+    var column = svg.selectAll(".column")
+      .data(products)
+      .enter().append("g")
+        .attr("class", "column")
+        .attr("transform", function(d, i) { return "translate(" + xv(i) + ")rotate(-90)"; });
+
+    column.append("line")
+      .attr("x1", -height);
+
+    column.append("text")
+      .attr("x", 6)
+      .attr("y", xv.rangeBand() / 2)
+      .attr("dy", ".32em")
+      .attr("text-anchor", "start")
+      .style("font-size", "10px")
+      .text(function(d, i) { return d; });  
+    
+
+    function row2(row) {
+        var cell = d3.select(this).selectAll(".cell")
+            .data(row.filter(function(d) { return d.z; }))
+            .enter().append("rect")
+            .attr("class", "cell")
+            .attr("x", function(d) { return xv(d.x); })
+            .attr("width", xv.rangeBand())
+            .attr("height", x.rangeBand())
+            //.style("fill-opacity", function(d) { return z(d.z); })
+            .style("fill", function(d) { return colorScale((d.pos+d.neg)/2) })
+            .on("mouseover", mouseover)
+            .on("mouseout", mouseout);
+    }
+
+
+    function row(row){
+        var cell = d3.select(this).selectAll('.cell')
+            .data(row.filter(function(d){return d.z}))
+            .enter().append("g")
+            .attr('class', 'cell')
+            .attr('x', function(d){return xv(d.x);})
+            .attr("width", xv.rangeBand())
+            .attr("height", x.rangeBand())
+            .each(two)
+            .on("mouseover", mouseover)
+            .on("mouseout", mouseout);       
+    }
+
+    
+    function two(dat){
+        var detallepos = d3.select(this).selectAll('.cellpos')
+            .data(function(d){return [d]})
+            .enter().append("rect")
+            .attr("class", "cellpos")
+            .attr("x", function(d){return xv(d.x);})
+            .attr("width", function(d){return pp(d.pos/d.z)})
+            .attr("height", x.rangeBand())
+            .style("fill", function(d){return colorScale(d.npos);});
+
+        var detalleneg = d3.select(this).selectAll('.cellneg')
+            .data(function(d){return [d]})
+            .enter().append("rect")
+            .attr("class", "cellneg")
+            .attr("x", function(d){return xv(d.x) + pp(d.pos/d.z)})
+            .attr("width", function(d){return xv.rangeBand() - pp(d.pos/d.z)})
+            .attr("height", x.rangeBand())
+            .style("fill", function(d){return colorScale(d.nneg)});            
+    }
+
+    function mouseover(p) {
+        d3.selectAll(".row text").classed("active", function(d, i) { return i == p.y; });
+        d3.selectAll(".column text").classed("active", function(d, i) { return i == p.x; });
+    }
+
+    function mouseout() {
+        d3.selectAll("text").classed("active", false);
+    }  
+
+
+    d3.select("#order").on("change", function() {
+        clearTimeout(timeout);
+        order(this.value);
+      });
+
+      function order(value) {
+        x.domain(orders[value]);
+
+        var t = svg.transition().duration(2500);
+
+        t.selectAll(".row")
+            .delay(function(d, i) { return 100; })
+            .attr("transform", function(d, i) { return "translate(0," + x(i) + ")"; })
+          .selectAll(".cell")
+            .delay(function(d) { return 100; })
+            .attr("x", function(d) { return x(d.x); });
+
+        
+      }
+
+      var timeout = setTimeout(function() {
+        order("group");
+        d3.select("#order").property("selectedIndex", 2).node().focus();
+      }, 5000);
+
+ </script>
+</html>

@@ -1,0 +1,133 @@
+html * {
+    box-sizing: border-box;
+}
+
+body{
+    padding: 10px 20px;
+    background: #FFFFFF;
+    font-family: sans-serif;
+    text-align: center;
+    color: #777;
+}
+
+#chart {
+    margin-top: 20px;
+    margin-bottom: 20px;
+    width: 660px;
+}
+
+.chart .axis text {
+    font: 10px sans-serif;
+}
+
+.chart .axis .domain,
+.chart .axis .tick line {
+    fill: none;
+    stroke: black;
+}
+
+.chart .bar path {
+    stroke-width: 1.5;
+}
+
+.chart .bar.up-day path {
+    stroke: green;
+}
+
+.chart .bar.down-day path {
+    stroke: red;
+}
+
+.chart .bar.up-day rect {
+    fill: green;
+}
+
+.chart .bar.down-day rect {
+    fill: red;
+}
+
+.chart .overlay {
+    stroke-width: 0px;
+    fill-opacity: 0;
+}
+
+.navigator .navEnter .data {
+    fill: lightgrey;
+    stroke-width: 0px;
+}
+
+.navigator .line {
+    fill: none;
+    stroke: darkgrey;
+    stroke-width: 1px;
+}
+
+.navigator .navEnter .line {
+    fill: none;
+    stroke: darkgrey;
+    stroke-width: 1px;
+}
+
+.navigator .viewport {
+    stroke: grey;
+    fill: black;
+    fill-opacity: 0.2;
+}
+
+.chart .gridlines {
+    stroke: lightgrey;
+    shape-rendering: crispEdges;
+    stroke-width: 1;
+}
+
+.chart .myReviews-series .line {
+    fill: none;
+    stroke: steelblue;
+    stroke-width: 1.5px;
+    vector-effect: non-scaling-stroke;
+}
+
+svg rect.zoom-panel {
+        cursor: move;
+        fill: none;
+        pointer-events: all;
+}
+
+div.tooltip {   
+    position: absolute;         
+    text-align: center;         
+    width: 220px;                    
+    height: 328px;                   
+    padding: 2px;               
+    font: 12px sans-serif;      
+    background: lightsteelblue; 
+    border: 0px;        
+    border-radius: 18px;         
+    pointer-events: none;
+    color: #FFFFFF;     
+    background: #000000;    
+ 
+}
+
+
+div.tooltip span:after {
+  content: '';
+  position: absolute;
+  top: 10%;
+  right: 100%;
+  margin-top: -8px;
+  width: 0; height: 0;
+  border-right: 8px solid #000000;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+}
+div:hover.tooltip span {
+  
+  opacity: 0.6;
+  right: 100%;
+  top: 50%;
+  margin-top: -19.5px;
+  margin-right: 15px;
+  z-index: 999;
+}
+
