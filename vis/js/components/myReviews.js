@@ -49,6 +49,7 @@ define([
 					})
 					.enter().append("path")
 					.attr("class", "line")
+                    .attr("id", function(d,i){return "line" + i;})
 					.attr("clip-path", "url(#clip)")
 					.attr("d", function(d){
 						
@@ -67,7 +68,8 @@ define([
 
                 points.enter()
                     .append('g')
-                    .classed('points', true);
+                    .classed('points', true)
+                    .attr("id", function(d,i){return "points" + i;});
 
                 var promReview = calcAverage(data);
                 
@@ -80,25 +82,51 @@ define([
                 });
                 
                 var ds = [];
+                var chc = [];
                 for (var i = 0; i < data.length; i++) {
-                    ds.push(Math.random())
+                    ds.push(Math.random());
+                    chc.push(i);
                 };
                 
 
                 var stars = d3.select("svg").selectAll('.mystars').data(ds, function(d){return d;});
                 var promNum = d3.select("svg").selectAll('.promAv').data(promReview, function(d){return d;});
-                  
+                var checks = d3.select("#myform").selectAll('.check')
+                            .data(chc, function(d){return d;}).enter().append("input")
+                .attr("class", "check")
+                .attr("type", "checkbox")
+                .attr("name", "toggle")
+                .style('position', 'absolute')
+                .style("top", function(d,i){return (1 + (i*30)) + "px"})
+                .attr("checked", true)
+                .on('click', function(d,i){
+                    //console.log("mirass: ", this.checked);
+                    if(this.checked){
+                        d3.selectAll("#line" + i).style("visibility", "visible");
+                        d3.selectAll('#points' + i).style('visibility', "visible");
+                        d3.selectAll('#navEnter' + i).style('visibility', "visible");
+                    }
+                    else{
+                        d3.selectAll("#line" + i).style("visibility", "hidden");
+                        d3.selectAll('#points' + i).style('visibility', "hidden");
+                        d3.selectAll('#navEnter' + i).style('visibility', "hidden");
+                    }
+                });   
+;  
+
+
                 progressChart(totalReview);   
                 circlesChart(points);    
                 barProduct(bpro);
                 starsf(stars);
-                fpronum(promNum); 
+                fpronum(promNum);
+                //fncheck(checks);  
                     
                 stars.exit().remove();
                 totalReview.exit().remove();
                 bpro.exit().remove();
                 promNum.exit().remove();
-                
+               // checks.exit().remove();
 
 
 						
@@ -108,12 +136,40 @@ define([
         var wScale = d3.scale.linear().domain([0, 5]).range([0, 100])
         var formatDec = function(d){return Number(d).toFixed(3);}
 
+        var fncheck = function(checks){
+            checks.enter().append("input")
+                .attr("class", "check")
+                .attr("type", "checkbox")
+                .attr("name", "toggle")
+                .style('position', 'absolute')
+                .style("top", function(d,i){return (1 + (i*30)) + "px"})
+                .attr("checked", true)
+                .on('click', function(d,i){
+                    //console.log("mirass: ", this.checked);
+                    if(this.checked){
+                        d3.selectAll("#line" + i).style("visibility", "visible");
+                        d3.selectAll('#points' + i).style('visibility', "visible");
+                        d3.selectAll('#navEnter' + i).style('visibility', "visible");
+                    }
+                    else{
+                        d3.selectAll("#line" + i).style("visibility", "hidden");
+                        d3.selectAll('#points' + i).style('visibility', "hidden");
+                        d3.selectAll('#navEnter' + i).style('visibility', "hidden");
+                    }
+                });   
+
+        }
+
         var fpronum = function(promNum){
             promNum.enter().append("text").attr("class", "promAv");
 
-            promNum.attr("x", 920)
+            promNum.attr("x", 1020)
                 .attr("y", function(d,i){return detailsH + 5 + (i*30)})
-                .text(function(d){return formatDec(d);});    
+                .text(function(d,i){
+                    if((d-((i+1)*5)) === 0.0)
+                        return null;
+                    return formatDec(d-((i+1)*5));
+                });    
 
         }
 
@@ -123,7 +179,7 @@ define([
             .attr('class', 'mystars')
             .attr('width', 100)
             .attr('height', 30)
-            .attr('x', 820)
+            .attr('x', 920)
             .attr('y', function(d,i){return detailsH - 16.7 + (i*30)});
 
             stars              
@@ -137,9 +193,9 @@ define([
             prom.enter().append('rect')
                 .attr('class', 'progressStar');
 
-                prom.attr('x', 820)
+                prom.attr('x', 920)
                 .attr('y', function(d, i){return detailsH - 11 + (i*30)})
-                .attr('width', function(d){return wScale(d)})
+                .attr('width', function(d,i){return wScale(d-((i+1)*5))})
                 .attr('height', 19)
                 .style("fill", "#E8DA0E")
                 .style("position", "absolute")
@@ -164,7 +220,7 @@ define([
                     .attr("y", function(d,i){ return detailsH + (i*30)})
                     .attr("dy", ".35em")
                     .text(function(d){
-                        return d.name;
+                        return d.nombre;
                     });
 
                     
@@ -267,6 +323,9 @@ define([
         var calcAverage = function(data){
             var dateini = new Date(xScale.domain()[0]);
             var dateend = new Date(xScale.domain()[1]);
+
+            //console.log("ini ", dateini, "fin ", dateend);
+
             var sum = 0.0;
             var count = 0;
             var arr = [];            
@@ -285,10 +344,11 @@ define([
                 if(sum > 0){
                     //console.log('i: ', i, 'ver ', sum, 'count ', count);
                     sum = sum/count;
-                    arr.push(sum);
+                    arr.push(sum + ((i+1)*5));
                 }else{
-                    arr.push(0);
+                    arr.push(0 + ((i+1)*5));
                 }
+                
             };
             return arr;   
         }

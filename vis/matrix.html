@@ -131,7 +131,7 @@ var folder = "./datasetJson/";
         };    
 
     //////////////////////////////////////////////////////////////////////////////////////////////////
-    var margin = {top: 80, right: 10, bottom: 10, left: 100},
+    var margin = {top: 80, right: 10, bottom: 10, left: 200},
     width = 420,
     height = 7000;
 
@@ -151,7 +151,9 @@ var folder = "./datasetJson/";
               .domain(porcor)
               .range(colors);
 
-    
+    var gridSizeW  = Math.floor(35);
+    var gridSizeH  = Math.floor(height/1100);
+    var legendElementWidth = gridSizeH*2;
 
 
     var svg = d3.select("#chart").append("svg")
@@ -296,6 +298,26 @@ var folder = "./datasetJson/";
     function mouseout() {
         d3.selectAll("text").classed("active", false);
     }  
+
+    var legend = svg.selectAll(".legend")
+        .data(colors);   
+    legend.enter().append("g")
+        .attr("class", "legend");
+    legend.append("rect")
+        .attr("x", -90)
+        .attr("y", function(d,i){return legendElementWidth*2*i;})
+        .attr("width", gridSizeH*2)
+        .attr("height", legendElementWidth*2)
+        .style("fill", function(d,i){return colors[i];});
+    legend.append("text")
+        .attr("class", "mono")
+        .text(function(d,i){return colordom[i];})
+        .attr("x", -105)
+        .attr("y", function(d,i){return legendElementWidth*2*i+20;})
+        .style("fill", "black")
+        .style("font-weight","bold")
+        .style("text-align", "center")
+        .style("font-size", "7px");
 
 
     d3.select("#order").on("change", function() {

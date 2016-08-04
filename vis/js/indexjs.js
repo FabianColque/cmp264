@@ -32,13 +32,26 @@ define([
     	return -1;
   	}  
 
+
+    var nombress = [{a: "B000S5Q9CA", b: "Motorola Vehicle Power"},{a: "B0015RB39O", b: "Delton USB iPhone 3GS"}, {a: "B0042FV2SI", b: "iPhone 4 Anti-Glare"}, {a: "B005SUHPO6", b: "Defender Case for iPhone 4"}, {a: "B005SUHRVC", b: "OtterBox Case for iPhone 4"}, {a: "B0073FCPSK", b: "PowerGenDualUSB Apple2.4"}, {a: "B007FHX9OK", b: "iOttie Easy for iPhone 6s"}, {a: "B007FXMOV8", b: "Stylus Pen TouchScreen b/w"}, {a: "B0088LYCZC", b: "Tech ArmorClear S S3"}, {a: "B0088U4YAG", b: "Dual USB car"}];
+
+    var getNombre = function(assin){
+        for(var i = 0; i < 10; i++){
+            if(nombress[i].a === assin)
+                return i;
+        }
+        return 2;
+    }
+
+
   	for (var i = 0; i < datapre.length; i++) {
       var ind = existe(datapre[i].asin);
-      if(data.length == 6 && datapre[i].asin != datapre[i-1].asin)break;
+      if(data.length == 10 && datapre[i].asin != datapre[i-1].asin)break;
       if(ind != -1){
         data[ind].data.push({date: new Date(datapre[i].reviewTime), rating: datapre[i].overall, revi : datapre[i].reviewText});
       } else{
-        data.push({name: datapre[i].asin, data : []});
+        var gv = getNombre(datapre[i].asin);
+        data.push({name: datapre[i].asin, nombre: nombress[gv].b, data : []});
         data[data.length-1].data.push({date: new Date(datapre[i].reviewTime), rating: datapre[i].overall, revi : datapre[i].reviewText});
       }
                  
@@ -65,6 +78,29 @@ define([
 				.append('g')
 				.attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
 
+    var gradient = plotChart.append("defs")
+      .append("linearGradient")
+        .attr("id", "gradient")
+        .attr("x1", "100%")
+        .attr("y1", "100%")
+        .attr("x2", "100%")
+        .attr("y2", "0%")
+        .attr("spreadMethod", "pad");
+
+    gradient.append("stop")
+        .attr("offset", "0%")
+        .attr("stop-color", "#FF0301");
+
+    gradient.append("stop")
+        .attr("offset", "50%")
+        .attr("stop-color", "#F9FC00");
+
+    gradient.append("stop")
+        .attr("offset", "100%")
+        .attr("stop-color", "#038200");    
+        
+
+
 	    //Zoom
     var xScale = d3.time.scale();
     var yScale = d3.scale.linear();
@@ -87,7 +123,8 @@ define([
         
 
     plotChart.append("rect").attr("class", "zoom-panel")
-        .attr('width', width).attr('height', height).call(zoom); 
+        .attr('width', width).attr('height', height).style("fill", "url(#gradient)")
+        .style("opacity", "0.6").call(zoom); 
 
     plotChart.call(zoom);
     var plotArea = plotChart.append('g')
@@ -154,7 +191,9 @@ define([
     	.data(data)
     	.enter()
     	.append('g')
-    	.classed('navEnter', true);    
+    	.classed('navEnter', true)
+        .attr("id", function(d, i){return "navEnter" + i;} )
+        .style("opacity", 0.8);    
 
     var navXScale = d3.time.scale()
         .domain([
